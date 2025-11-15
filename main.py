@@ -2,67 +2,43 @@ from pytubefix import YouTube
 import ssl
 import os.path
 import sys
-import argparse
 from pathlib import Path
 from dictionary import Download
+path_to_download_folder = str(os.path.join(Path.home(), "Downloads"))
 
-# Fix SSL certificate issues
 ssl._create_default_https_context = ssl._create_unverified_context
+percentage_of_completion = 0
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description='🎬 YouTube Downloader with shortcuts')
-    parser.add_argument('url', nargs='?', help='YouTube video URL')
-    parser.add_argument('--a', '--audio', action='store_true',
-                        help='Download audio only')
-    parser.add_argument(
-        '--v', '--video', action='store_true', help='Download video')
-    parser.add_argument('--best', action='store_true',
-                        help='Download best quality available')
-    parser.add_argument('--quality', type=str,
-                        help='Specify quality (e.g., 128, 192, 320 for audio or 720, 1080 for video)')
+def progress_function(vid, chunk, bytes_remaining):
+    total_size = vid.filesize
+    bytes_downloaded = total_size - bytes_remaining
+    percentage_of_completion = bytes_downloaded / total_size * 100
+    totalsz = (total_size/1024)/1024
+    totalsz = round(totalsz, 1)
+    remain = (bytes_remaining / 1024) / 1024
+    remain = round(remain, 1)
+    dwnd = (bytes_downloaded / 1024) / 1024
+    dwnd = round(dwnd, 1)
+    percentage_of_completion = round(percentage_of_completion, 2)
 
-    return parser.parse_args()
-
-
-def main():
-    print("🎬 YouTube Downloader")
-    print("====================")
-
-    args = parse_arguments()
-
-    # Get URL from command line or ask user
-    if args.url:
-        link = args.url
-        print(f"📎 URL: {link}")
-    else:
-        link = input("Enter the YouTube video URL: ")
-
-    if not link.strip():
-        print("❌ Please provide a valid URL")
-        return
-
-    # Determine download options from arguments
-    download_type = None
-    quality = None
-
-    if args.a:
-        download_type = 'audio'
-        if args.best:
-            quality = 'best'
-        elif args.quality:
-            quality = args.quality
-    elif args.v:
-        download_type = 'video'
-        if args.best:
-            quality = 'best'
-        elif args.quality:
-            quality = args.quality
-
-    print('⏳ Wait please...')
-    Download(link, download_type, quality)
+    # print(f'Total Size: {totalsz} MB')
+    print(
+        f'Download Progress: {percentage_of_completion}%, Downloaded: {dwnd} MB, Remaining:{remain} MB, Total Size:{totalsz} MB')
 
 
-if __name__ == "__main__":
-    main()
+# def Download(link):
+#     youtubeObject = YouTube(link, on_progress_callback=progress_function)
+#     youtubeObject = youtubeObject.streams.get_highest_resolution()
+#     try:
+#         youtubeObject.download(path_to_download_folder)
+
+#     except:
+#         print("An error has occurred")
+
+
+link = input("Enter the YouTube video URL: ")
+print('Wait please...')
+
+
+Download(link)
